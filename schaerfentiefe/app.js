@@ -49,7 +49,10 @@ function calculate() {
   $('near-text').setAttribute('transform', `translate(${safeNearX - 8} ${sceneBottom - 8}) rotate(-90)`); $('far-text').setAttribute('transform', `translate(${safeFarX + 12} ${sceneTop + 10}) rotate(90)`); $('near-text').textContent = fmt(nearM); $('far-text').textContent = fmt(farM);
   $('dof-line').setAttribute('x1', safeNearX); $('dof-line').setAttribute('x2', safeFarX); $('dof-left-tick').setAttribute('x1', safeNearX); $('dof-left-tick').setAttribute('x2', safeNearX); $('dof-right-tick').setAttribute('x1', safeFarX); $('dof-right-tick').setAttribute('x2', safeFarX); $('dof-label').setAttribute('x', (safeNearX + safeFarX) / 2); $('dof-label').textContent = infinity ? 'Schärfentiefe bis ∞' : fmt(total);
   $('focus-label').setAttribute('x', subjectX); $('focus-label').textContent = fmt(distance);
-  const subjectBaseY = $('subject-select').value === 'person' ? 165 : $('subject-select').value === 'dog' ? 285 : 300;
+  // Die Füße der Frau liegen im Bildausschnitt rund 30 SVG-Punkte über
+  // dessen Unterkante. Mit 195 steht sie auf derselben Bodenlinie wie
+  // der Fotograf; der Wert gilt für Original und Schärfe-Überlagerung.
+  const subjectBaseY = $('subject-select').value === 'person' ? 195 : $('subject-select').value === 'dog' ? 285 : 300;
   ['person', 'dog', 'object'].forEach(kind => $(`subject-${kind}`).setAttribute('transform', `translate(${subjectX} ${subjectBaseY})`));
   ['person', 'dog', 'object'].forEach(kind => $(`focus-${kind}`).setAttribute('transform', `translate(${subjectX} ${subjectBaseY})`));
 }
