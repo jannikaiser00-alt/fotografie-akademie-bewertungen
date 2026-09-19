@@ -41,7 +41,7 @@
         <p class="scene-tip">Tipp: Ziehe in der Szene oder verwende den Regler, um die Fokusdistanz zu setzen.</p>
       </section>
 
-      <section class="stats" aria-label="Berechnete Werte">
+      <section class="stats" aria-label="Berechnete Werte" aria-live="polite" aria-atomic="true">
         <article><span>Nahgrenze</span><strong id="near-value">–</strong></article>
         <article><span>Ferngrenze</span><strong id="far-value">–</strong></article>
         <article><span>Schärfentiefe</span><strong id="dof-value">–</strong></article>
@@ -59,7 +59,7 @@
           <label class="field"><span>Brennweite <output id="focal-output"></output></span><input id="focal" type="range" min="3" max="400" step="1" value="50" /><div class="ticks proportional focal-ticks"><span style="--p:0%">3</span><span style="--p:2.8%">14</span><span style="--p:6.3%">28</span><span style="--p:11.8%">50</span><span style="--p:20.7%">85</span><span style="--p:49.6%">200</span><span style="--p:100%">400 mm</span></div></label>
           <label class="field"><span>Blende <output id="aperture-output"></output></span><input id="aperture" type="range" min="0.8" max="22" step="0.1" value="1.8" /><div class="ticks proportional aperture-ticks"><span style="--p:0%">f/0.8</span><span style="--p:2.8%">1.4</span><span style="--p:9.4%">2.8</span><span style="--p:22.6%">5.6</span><span style="--p:48.1%">11</span><span style="--p:100%">f/22</span></div></label>
           <div class="two-cols">
-            <label class="field select-field"><span>Sensorformat</span><select id="sensor"><option value="fullframe">Vollformat (35 mm)</option><option value="apsc">APS-C</option><option value="mft">Micro Four Thirds</option><option value="medium66">Mittelformat 6×6</option><option value="medium67">Mittelformat 6×7</option><option value="smartphone">Smartphone · 1/2,55″ Referenz</option><option value="webcam">Webcam · 1/4″ Referenz</option></select></label>
+            <label class="field select-field"><span>Sensorformat</span><select id="sensor"><option value="fullframe">Vollformat (35 mm)</option><option value="apsc">APS-C</option><option value="mft">Micro Four Thirds</option><option value="medium66">Mittelformat 6×6</option><option value="medium67">Mittelformat 6×7 (Querformat)</option><option value="smartphone">Smartphone · 1/2,55″ Referenz</option><option value="webcam">Webcam · 1/4″ Referenz</option></select></label>
             <label class="field select-field"><span>Motiv</span><select id="subject-select"><option value="person">Person</option><option value="dog">Hund</option><option value="object">Objekt</option></select></label>
           </div>
           <p id="equivalent" class="hint"></p><p id="diffraction" class="warning" hidden></p><p id="macro-note" class="hint" hidden></p>
@@ -69,6 +69,6 @@
       </section>
       <footer>© Fotografie Akademie · Lernwerkzeug zur Planung deiner Aufnahme</footer>
     </main>
-    <script src="app.js?v=20260919-1"></script>
+    <script src="app.js?v=20260919-2"></script>
   </body>
 </html>
