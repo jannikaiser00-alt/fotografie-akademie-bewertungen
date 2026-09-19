@@ -1,8 +1,8 @@
 const $ = (id) => document.getElementById(id);
-// Kreis der Zerstreuung und Crop-Faktoren entsprechen den Werten der Referenzanwendung.
+// Kreis der Zerstreuung (CoC) und Crop-Faktoren je Sensorformat.
 const sensors = {
-  webcam: { coc: 0.002, crop: 9.6, height: 3.6 }, smartphone: { coc: 0.002, crop: 6.1, height: 7.3 }, fullframe: { coc: 0.029, crop: 1, height: 24 }, apsc: { coc: 0.019, crop: 1.52, height: 15.6 },
-  mft: { coc: 0.015, crop: 2, height: 13 }, medium66: { coc: 0.020, crop: 0.55, height: 60 }, medium67: { coc: 0.025, crop: 0.47, height: 70 }
+  webcam: { coc: 0.003, crop: 10.8, height: 2.4, note: 'Referenzprofil: 1/4″-Webcam-Sensor (3,2 × 2,4 mm).' }, smartphone: { coc: 0.005, crop: 6, height: 4.29, note: 'Referenzprofil: 1/2,55″-Smartphone-Sensor (5,76 × 4,29 mm).' }, fullframe: { coc: 0.029, crop: 1, height: 24 }, apsc: { coc: 0.019, crop: 1.52, height: 15.6 },
+  mft: { coc: 0.015, crop: 2, height: 13 }, medium66: { coc: 0.050, crop: 0.55, height: 60 }, medium67: { coc: 0.060, crop: 0.47, height: 70 }
 };
 const presets = { portrait:{distance:2.2,focal:85,aperture:1.8,sensor:'fullframe'}, street:{distance:3,focal:35,aperture:4,sensor:'fullframe'}, landscape:{distance:8,focal:24,aperture:8,sensor:'fullframe'}, macro:{distance:.55,focal:100,aperture:4,sensor:'fullframe'} };
 const fmt = (meters, digits = 2) => meters < 1 ? `${Math.round(meters * 100)} cm` : meters >= 1000 ? `${(meters / 1000).toFixed(2).replace('.', ',')} km` : `${meters.toFixed(digits).replace('.', ',')} m`;
@@ -30,8 +30,9 @@ function calculate() {
   const nearM = near / 1000, farM = far / 1000, total = infinity ? Infinity : Math.max(0, farM - nearM), farOutsideScene = infinity || farM > sceneDistance;
   $('near-value').textContent = fmt(nearM); $('far-value').textContent = infinity ? '∞' : fmt(farM); $('dof-value').textContent = infinity ? '∞' : fmt(total); $('hyper-value').textContent = fmt(hyperfocal / 1000);
   $('distance-output').textContent = fmt(distance); $('focal-output').textContent = `${focal} mm`; $('aperture-output').textContent = `f/${aperture.toFixed(1)}`; $('scene-readout').textContent = `Fokus auf ${fmt(distance)}`; $('lens-readout').textContent = `${focal} mm · f/${aperture.toFixed(1)}`;
-  const equivalent = Math.round(focal * sensor.crop); $('equivalent').textContent = sensor.crop === 1 ? '' : `Entspricht ungefähr ${equivalent} mm an Vollformat.`;
+  const equivalent = Math.round(focal * sensor.crop); $('equivalent').textContent = sensor.note ? `${sensor.note} Entspricht beim Bildwinkel ungefähr ${equivalent} mm am Vollformat; die Schärfentiefe bleibt formatspezifisch.` : sensor.crop === 1 ? '' : `Entspricht beim Bildwinkel ungefähr ${equivalent} mm am Vollformat; die Schärfentiefe bleibt formatspezifisch.`;
   const diffractionLimit = sensor.coc / 0.001342, warning = $('diffraction'); warning.hidden = aperture <= diffractionLimit; warning.textContent = `Hinweis: Ab etwa f/${diffractionLimit.toFixed(1)} kann Beugung die Detailschärfe an diesem Sensor verringern.`;
+  const macroNote = $('macro-note'); macroNote.hidden = distance >= 1; macroNote.textContent = 'Bei Nah- und Makroaufnahmen ist dies eine Standard-Näherung: effektive Blende, Fokus-Breathing und Pupillenmaßstab eines konkreten Objektivs sind nicht eingerechnet.';
   const hyperButton = $('hyper-button'); hyperButton.disabled = hyperfocal / 1000 > sliderMaximum; hyperButton.title = hyperButton.disabled ? `Die hyperfokale Distanz (${fmt(hyperfocal / 1000)}) liegt außerhalb der 10,16-m-Szene.` : 'Auf die hyperfokale Distanz fokussieren';
   const subjectX = xForDistance(distance), nearX = xForDistance(nearM), farX = farOutsideScene ? sceneRight : xForDistance(farM);
   const safeNearX = clamp(nearX, 190, 1120), safeFarX = clamp(Math.max(farX, safeNearX + 4), safeNearX + 4, 1124);
@@ -43,11 +44,17 @@ function calculate() {
   const bottomPath = bottomAtRight > sceneBottom ? `L ${sceneRight} ${sceneBottom} L ${lensX + (sceneBottom - lensY) / slope} ${sceneBottom}` : `L ${sceneRight} ${bottomAtRight}`;
   const fovPath = `M ${lensX} ${lensY} ${topPath} L ${sceneRight} ${lensY} ${bottomPath} Z`;
   $('fov-cone').setAttribute('d', fovPath); $('fov-clip-path').setAttribute('d', fovPath);
+  // Die dunkle Überlagerung ist die Schnittmenge aus Bildwinkel und der
+  // berechneten Nah-/Ferngrenze – nicht nur der graue Bildwinkel allein.
+  const topAt = (x) => clamp(lensY - slope * (x - lensX), sceneTop, sceneBottom);
+  const bottomAt = (x) => clamp(lensY + slope * (x - lensX), sceneTop, sceneBottom);
+  $('focus-clip-path').setAttribute('d', `M ${safeNearX} ${topAt(safeNearX)} L ${safeFarX} ${topAt(safeFarX)} L ${safeFarX} ${bottomAt(safeFarX)} L ${safeNearX} ${bottomAt(safeNearX)} Z`);
   $('near-line').setAttribute('x1', safeNearX); $('near-line').setAttribute('x2', safeNearX); $('far-line').setAttribute('x1', safeFarX); $('far-line').setAttribute('x2', safeFarX); $('focus-line').setAttribute('x1', subjectX); $('focus-line').setAttribute('x2', subjectX);
   const showBoundaryLabels = !farOutsideScene && total > .4572;
   $('near-text').toggleAttribute('hidden', !showBoundaryLabels); $('far-text').toggleAttribute('hidden', !showBoundaryLabels);
+  const farOutsideText = $('far-outside-text'); farOutsideText.toggleAttribute('hidden', !farOutsideScene); farOutsideText.textContent = infinity ? 'Schärfebereich bis ∞ →' : `Schärfebereich bis ${fmt(farM)} →`;
   $('near-text').setAttribute('transform', `translate(${safeNearX - 8} ${sceneBottom - 8}) rotate(-90)`); $('far-text').setAttribute('transform', `translate(${safeFarX + 12} ${sceneTop + 10}) rotate(90)`); $('near-text').textContent = fmt(nearM); $('far-text').textContent = fmt(farM);
-  $('dof-line').setAttribute('x1', safeNearX); $('dof-line').setAttribute('x2', safeFarX); $('dof-left-tick').setAttribute('x1', safeNearX); $('dof-left-tick').setAttribute('x2', safeNearX); $('dof-right-tick').setAttribute('x1', safeFarX); $('dof-right-tick').setAttribute('x2', safeFarX); $('dof-label').setAttribute('x', (safeNearX + safeFarX) / 2); $('dof-label').textContent = infinity ? 'Schärfentiefe bis ∞' : fmt(total);
+  $('dof-line').setAttribute('x1', safeNearX); $('dof-line').setAttribute('x2', safeFarX); $('dof-left-tick').setAttribute('x1', safeNearX); $('dof-left-tick').setAttribute('x2', safeNearX); $('dof-right-tick').setAttribute('x1', safeFarX); $('dof-right-tick').setAttribute('x2', safeFarX); $('dof-label').setAttribute('x', (safeNearX + safeFarX) / 2); $('dof-label').textContent = infinity ? 'Schärfentiefe bis ∞' : farOutsideScene ? `${fmt(total)} · außerhalb der Szene` : fmt(total);
   $('focus-label').setAttribute('x', subjectX); $('focus-label').textContent = fmt(distance);
   // Die Füße der Frau liegen im Bildausschnitt rund 30 SVG-Punkte über
   // dessen Unterkante. Mit 195 steht sie auf derselben Bodenlinie wie
@@ -67,7 +74,7 @@ $('subject-select').addEventListener('change', (event) => {
   calculate();
 });
 $('hyper-button').addEventListener('click', () => { const focal = +$('focal').value, aperture = +$('aperture').value, coc = sensors[$('sensor').value].coc; const hyperfocal = (focal + (focal * focal) / (aperture * coc)) / 1000; if (hyperfocal <= sliderMaximum) { setValue('distance', clamp(hyperfocal, minimumDistanceFor(focal), sliderMaximum)); $('preset').value = 'custom'; calculate(); } });
-$('theme-toggle').addEventListener('click', () => { document.body.classList.toggle('dark'); $('theme-toggle').textContent = document.body.classList.contains('dark') ? '☀' : '☾'; });
+$('theme-toggle').addEventListener('click', () => { const isDark = document.body.classList.toggle('dark'); const button = $('theme-toggle'); button.textContent = isDark ? '☀' : '☾'; button.setAttribute('aria-pressed', String(isDark)); button.setAttribute('aria-label', isDark ? 'Helle Darstellung aktivieren' : 'Dunkle Darstellung aktivieren'); button.title = button.getAttribute('aria-label'); });
 const sceneSvg = document.querySelector('.scene-svg');
 let draggingScene = false;
 function setDistanceFromPointer(event) { const point = sceneSvg.createSVGPoint(); point.x = event.clientX; point.y = event.clientY; const svgPoint = point.matrixTransform(sceneSvg.getScreenCTM().inverse()); const distance = ((clamp(svgPoint.x, lensX, sceneRight) - lensX) / (sceneRight - lensX)) * sceneDistance; const focal = +$('focal').value; setValue('distance', clamp(distance, minimumDistanceFor(focal), sliderMaximum)); $('preset').value = 'custom'; calculate(); }
