@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css?v=20260919-5" />
+    <link rel="stylesheet" href="styles.css?v=20260919-6" />
   </head>
   <body>
     <main class="app-shell">
@@ -55,7 +55,7 @@
           <label class="field select-field"><span>Voreinstellung</span>
             <select id="preset"><option value="custom">Eigene Einstellung</option><option value="portrait">Porträt · 85 mm · f/1.8</option><option value="street">Reportage · 35 mm · f/4</option><option value="landscape">Landschaft · 24 mm · f/8</option><option value="macro">Nahaufnahme · 100 mm · f/4</option></select>
           </label>
-          <label class="field"><span>Fokusdistanz <output id="distance-output"></output></span><input id="distance" aria-label="Fokusdistanz" type="range" min="0.05" max="10.16" step="0.0001" value="1.8" /></label>
+          <label class="field"><span>Fokusdistanz <output id="distance-output"></output></span><input id="distance" aria-label="Fokusdistanz" type="range" min="0.05" max="10.16" step="0.0001" value="1.8" /></label><p class="hint model-limit">Die Untergrenze ist eine theoretische Modellgrenze. Reale Objektive können eine abweichende Naheinstellgrenze haben.</p>
           <label class="field"><span>Brennweite <output id="focal-output"></output></span><input id="focal" type="range" min="3" max="400" step="1" value="50" /><div class="ticks proportional focal-ticks"><span style="--p:0%">3</span><span style="--p:2.8%">14</span><span style="--p:6.3%">28</span><span style="--p:11.8%">50</span><span style="--p:20.7%">85</span><span style="--p:49.6%">200</span><span style="--p:100%">400 mm</span></div></label>
           <label class="field"><span>Blende <output id="aperture-output"></output></span><input id="aperture" type="range" min="0.8" max="22" step="0.1" value="1.8" /><div class="ticks proportional aperture-ticks"><span style="--p:0%">f/0.8</span><span style="--p:2.8%">1.4</span><span style="--p:9.4%">2.8</span><span style="--p:22.6%">5.6</span><span style="--p:48.1%">11</span><span style="--p:100%">f/22</span></div></label>
           <div class="two-cols">
@@ -67,8 +67,9 @@
 
         <aside class="learn-card"><p class="eyebrow">Foto-Wissen</p><h2>Was passiert hier?</h2><p>Eine offene Blende, lange Brennweite und kurze Distanz verkleinern die Schärfentiefe. Das Motiv hebt sich stärker vom Hintergrund ab.</p><p class="visual-note">Die Darstellung zeigt den scharfen Bereich vereinfacht. Die leichte Unschärfe ersetzt keine optische Simulation eines konkreten Objektivs.</p><dl><div><dt>Kleinere f-Zahl</dt><dd>mehr Unschärfe</dd></div><div><dt>Längere Brennweite</dt><dd>engerer Bildwinkel</dd></div><div><dt>Größere Distanz</dt><dd>mehr Schärfentiefe</dd></div></dl></aside>
       </section>
+      <p id="result-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
       <footer>© Fotografie Akademie · Lernwerkzeug zur Planung deiner Aufnahme</footer>
     </main>
-    <script src="app.js?v=20260919-2"></script>
+    <script src="app.js?v=20260919-3"></script>
   </body>
 </html>
