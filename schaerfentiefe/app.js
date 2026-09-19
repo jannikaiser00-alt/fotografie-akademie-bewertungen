@@ -10,10 +10,11 @@ const sensors = {
   medium67: { coc: 0.059, crop: 0.49, height: 56 }
 };
 const presets = { portrait:{distance:2.2,focal:85,aperture:1.8,sensor:'fullframe'}, street:{distance:3,focal:35,aperture:4,sensor:'fullframe'}, landscape:{distance:8,focal:24,aperture:8,sensor:'fullframe'}, macro:{distance:.55,focal:100,aperture:4,sensor:'fullframe'} };
-const fmt = (meters, digits = 2) => {
+const fmtNumber = (value, digits) => String(Number(value.toFixed(digits))).replace('.', ',');
+const fmt = (meters, digits = 2, precise = false) => {
   if (meters < 0.00001) return '< 0,01 mm';
-  if (meters < 0.01) return `${(meters * 1000).toFixed(meters < 0.001 ? 2 : 1).replace('.', ',')} mm`;
-  if (meters < 1) return `${Math.round(meters * 100)} cm`;
+  if (meters < 0.01 || (precise && meters < 1)) return `${fmtNumber(meters * 1000, precise ? 2 : meters < 0.001 ? 2 : 1)} mm`;
+  if (meters < 1) return `${fmtNumber(meters * 100, 1)} cm`;
   if (meters >= 1000) return `${(meters / 1000).toFixed(2).replace('.', ',')} km`;
   return `${meters.toFixed(digits).replace('.', ',')} m`;
 };
@@ -43,11 +44,13 @@ function calculate() {
   const infinity = farDenominator <= 0;
   const far = infinity ? Infinity : (opticalTerm * subjectDistance) / farDenominator;
   const nearM = near / 1000, farM = far / 1000, total = infinity ? Infinity : Math.max(0, farM - nearM), farOutsideScene = infinity || farM > sceneDistance;
-  $('near-value').textContent = fmt(nearM); $('far-value').textContent = infinity ? '∞' : fmt(farM); $('dof-value').textContent = infinity ? '∞' : fmt(total); $('hyper-value').textContent = fmt(hyperfocal / 1000);
+  const boundaryPrecision = !infinity && total < .01;
+  $('near-value').textContent = fmt(nearM, 2, boundaryPrecision); $('far-value').textContent = infinity ? '∞' : fmt(farM, 2, boundaryPrecision); $('dof-value').textContent = infinity ? '∞' : fmt(total); $('hyper-value').textContent = fmt(hyperfocal / 1000);
+  $('result-status').textContent = `Fokus auf ${fmt(distance)}. Nahgrenze ${fmt(nearM, 2, boundaryPrecision)}, Ferngrenze ${infinity ? 'unendlich' : fmt(farM, 2, boundaryPrecision)}, Schärfentiefe ${infinity ? 'unendlich' : fmt(total)}.`;
   $('distance-output').textContent = fmt(distance); $('focal-output').textContent = `${focal} mm`; $('aperture-output').textContent = `f/${aperture.toFixed(1)}`; $('scene-readout').textContent = `Fokus auf ${fmt(distance)}`; $('lens-readout').textContent = `${focal} mm · f/${aperture.toFixed(1)}`;
   const equivalent = Math.round(focal * sensor.crop); $('equivalent').textContent = sensor.note ? `${sensor.note} Entspricht beim Bildwinkel ungefähr ${equivalent} mm am Vollformat; die Schärfentiefe bleibt formatspezifisch.` : sensor.crop === 1 ? '' : `Entspricht beim Bildwinkel ungefähr ${equivalent} mm am Vollformat; die Schärfentiefe bleibt formatspezifisch.`;
   const diffractionLimit = sensor.coc / 0.001342, warning = $('diffraction'); warning.hidden = aperture <= diffractionLimit; warning.textContent = `Hinweis: Ab etwa f/${diffractionLimit.toFixed(1)} kann Beugung die Detailschärfe an diesem Sensor verringern.`;
-  const macroNote = $('macro-note'); macroNote.hidden = distance >= 1; macroNote.textContent = 'Bei Nah- und Makroaufnahmen ist dies eine Standard-Näherung: effektive Blende, Fokus-Breathing und Pupillenmaßstab eines konkreten Objektivs sind nicht eingerechnet.';
+  const magnification = focal / Math.max(1, subjectDistance - focal), macroNote = $('macro-note'); macroNote.hidden = magnification < .1; macroNote.textContent = `Bei diesem geschätzten Abbildungsmaßstab (≈ ${fmtNumber(magnification, 2)}×) ist dies eine Standard-Näherung: effektive Blende, Fokus-Breathing und Pupillenmaßstab eines konkreten Objektivs sind nicht eingerechnet.`;
   const hyperButton = $('hyper-button'); hyperButton.disabled = hyperfocal / 1000 > sliderMaximum; hyperButton.title = hyperButton.disabled ? `Die hyperfokale Distanz (${fmt(hyperfocal / 1000)}) liegt außerhalb der 10,16-m-Szene.` : 'Auf die hyperfokale Distanz fokussieren';
   const subjectX = xForDistance(distance), nearX = xForDistance(nearM), farX = farOutsideScene ? sceneRight : xForDistance(farM);
   const safeNearX = clamp(nearX, 190, 1120), safeFarX = clamp(Math.max(farX, safeNearX + 4), safeNearX + 4, 1124);
